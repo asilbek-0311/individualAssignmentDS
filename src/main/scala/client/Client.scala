@@ -1,0 +1,50 @@
+package client
+import java.net.{Socket, InetAddress}
+import java.io.{BufferedReader, InputStreamReader, PrintWriter}
+import scala.io.StdIn
+
+object Client extends App {
+
+  val serverAddress = InetAddress.getByName("localhost")
+  val serverPort = 9999
+
+  var userInput: String = ""
+  println("""
+    Welcome to price checker
+
+    Enter a 13-digit ISBN to get the price and you will get hte price
+    if you get $-1.0 as your result, that means this product does not exist in our databse
+    You can type 'quit' to exit
+    """ )
+
+  while (userInput.toLowerCase() != "quit") {
+    println("Please enter ISBN number to get hte price or 'quit' to exit:")
+
+    userInput = StdIn.readLine().trim()
+
+    if (isValidISBN(userInput)) {
+      val clientSocket = new Socket(serverAddress, serverPort)
+
+      val reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream))
+      val writer = new PrintWriter(clientSocket.getOutputStream, true)
+
+      // Send ISBN to the server
+      writer.println(userInput)
+
+      // Receive and print the price from the server
+      val response = reader.readLine()
+      println(s"Server response: $response")
+
+      clientSocket.close()
+    } else {
+      println("Invalid ISBN. Please enter a valid 13-digit ISBN.")
+    }
+  }
+
+  println("Exiting the client application.")
+
+  def isValidISBN(isbn: String): Boolean = {
+    // Validate that the ISBN is a 13-digit number
+    isbn.matches("\\d{13}")
+  }
+}
